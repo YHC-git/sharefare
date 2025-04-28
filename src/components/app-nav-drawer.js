@@ -1,3 +1,4 @@
+import { loginUser, logoutUser, fetchCurrentUser } from '../api';
 import React, { Component, PropTypes } from 'react'
 import Drawer from 'material-ui/Drawer'
 import { List, ListItem, makeSelectable } from 'material-ui/List'
@@ -44,12 +45,32 @@ export class AppNavDrawer extends Component {
     style: PropTypes.object,
     isFetching: PropTypes.bool.isRequired,
     isStarted: PropTypes.bool.isRequired,
+    isAuthenticated: PropTypes.bool.isRequired,
+    currentUser: PropTypes.shape({
+      id: PropTypes.string,
+      avatar: PropTypes.string,
+      full_name: PropTypes.string
+    })
   }
 
   static contextTypes = {
     muiTheme: PropTypes.object.isRequired,
     router: PropTypes.object.isRequired,
   }
+
+  handleLogin = () => {
+    this.context.router.push('/login');
+  };
+  
+  handleLogout = async () => {
+    try {
+      await logoutUser();
+      this.props.onLogout();
+      this.context.router.push('/');
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   handleRequestChangeLink = (event, value) => {
     window.location = value
@@ -61,28 +82,36 @@ export class AppNavDrawer extends Component {
   }
 
   renderLeftHeader() {
-    const { isAuthenticated, isStarted, isFetching, currentUser } = this.props
+    const { isAuthenticated, isStarted, isFetching, currentUser } = this.props;
 
-    if (!isFetching && isStarted && isAuthenticated) {
-      return(
+    if (isFetching) {
+      return (
         <div style={styles.logo}>
-          <Link to={`/users/${currentUser.id}`}>
-            <Avatar src={currentUser.avatar} style={styles.avatatStyle} />
-            <span>{currentUser.full_name}</span>
+          <span>Loading...</span>
+        </div>
+      );
+    }
+
+    if (isStarted && isAuthenticated) {
+      return (
+        <div style={styles.logo}>
+          <Link to={`/users/${currentUser?.id || ''}`}>
+            <Avatar src={currentUser?.avatar || '/default-avatar.png'} style={styles.avatatStyle} />
+            <span>{currentUser?.full_name || 'User'}</span>
           </Link>
         </div>
-      )
-    } else {
-      return(
-        <div style={styles.logo} onTouchTap={this.handleTouchTapHeader}>
-          Blabla Clone
-        </div>
-      )
+      );
     }
+
+    return (
+      <div style={styles.logo} onTouchTap={this.handleTouchTapHeader}>
+        ShareFare
+      </div>
+    );
   }
 
   nestedAccountItems() {
-    const { isAuthenticated, onLogout } = this.props
+    const { isAuthenticated } = this.props;
     if (isAuthenticated) {
       return (
         <ListItem
@@ -93,16 +122,14 @@ export class AppNavDrawer extends Component {
             <ListItem primaryText="My cars" value="/account/cars" key="my-cars" leftIcon={<MapsDirectionsCar />} />,
             <ListItem primaryText="My rides as driver" value="/account/rides_as_driver" key="my-rides-driver" leftIcon={<DriverIcon />}/>,
             <ListItem primaryText="My rides as passenger" value="/account/rides_as_passenger" key="my-rides-passenger" leftIcon={<PassengerIcon />}/>,
-            <MenuItem onTouchTap={onLogout} primaryText="Logout" key="logout" leftIcon={<Delete />} />
+            <MenuItem onTouchTap={this.handleLogout} primaryText="Logout" key="logout" leftIcon={<Delete />} />
           ]}/>
-      )
+      );
     } else {
-      return (
-        [
-          <ListItem primaryText='Login' value='/login' key="login" />,
-          <ListItem primaryText='Register' value='/register' key="register" />
-        ]
-      )
+      return [
+        <ListItem primaryText='Login' value='/login' key="login" onTouchTap={this.handleLogin} />,
+        <ListItem primaryText='Register' value='/register' key="register" />
+      ];
     }
   }
 
@@ -147,6 +174,6 @@ export class AppNavDrawer extends Component {
           {this.nestedAccountItems()}
         </SelectableList>
       </Drawer>
-    )
+    );
   }
 }

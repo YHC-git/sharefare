@@ -49,7 +49,7 @@ export class Header extends Component {
 
   render() {
     const { containerWidth, currentUser, isAuthenticated, isStarted, isFetching } = this.props
-    const title = 'Blabla clone'
+    const title = 'ShareFare'
     let docked = false
     let showMenuIconButton = true
     let { navDrawerOpen } = this.state
