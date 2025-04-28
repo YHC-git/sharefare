@@ -21,5 +21,8 @@ def create_app():
 
     return app
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+# Create the app instance
+app = create_app()
+
+# Note: NO NEED TO do app.run() here on Render!
+# Gunicorn will automatically find "app" and run it.
